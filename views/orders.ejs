@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<title>إدارة الطلبات</title>
+
+<style>
+body{
+background:#f4f6f9;
+font-family:'Cairo',sans-serif;
+}
+
+.card{
+border:none;
+border-radius:12px;
+box-shadow:0 4px 15px rgba(0,0,0,0.08);
+}
+
+.table thead{
+background:#0d6efd;
+color:white;
+}
+
+.btn{
+border-radius:8px;
+}
+
+.search-box{
+max-width:300px;
+}
+</style>
+
+</head>
+
+<body>
+
+<nav class="navbar navbar-dark bg-primary p-3">
+<a class="navbar-brand fw-bold" href="/">لوحة التحكم</a>
+</nav>
+
+<div class="container mt-4">
+
+<h3 class="text-center mb-4">📦 إدارة الطلبات</h3>
+
+<div class="d-flex justify-content-between mb-3">
+<span class="text-muted">عدد الطلبات: <%= orders.length %></span>
+<input class="form-control search-box" id="search" placeholder="🔍 البحث">
+</div>
+<div class="card p-3">
+
+<table class="table text-center align-middle">
+
+<thead>
+<tr>
+<th>الزبون</th>
+<th>الهاتف</th>
+<th>المنتجات</th>
+<th>الإجمالي</th>
+<th>التاريخ</th>
+<th>إجراءات</th>
+</tr>
+</thead>
+
+<tbody id="table">
+
+<% orders.forEach(o => { %>
+<tr id="row-<%= o._id %>">
+
+<td class="fw-bold">
+<%= o.firstName %> <%= o.lastName %>
+</td>
+
+<td><%= o.phone %></td>
+
+<td class="text-start">
+<% o.products.forEach(p => { %>
+<div class="small">
+• <%= p.product?.name || "منتج محذوف" %> (× <%= p.quantity %>)
+</div>
+<% }) %>
+</td>
+
+<td class="text-danger fw-bold">
+<%= o.total %> دج
+</td>
+
+<td>
+<span class="badge bg-light text-dark">
+<%= new Date(o.createdAt).toLocaleDateString() %>
+</span>
+</td>
+
+<td>
+<!-- 🖨️ طباعة فرنسية -->
+<button 
+class="btn btn-primary btn-sm printFrBtn"
+data-order='<%- JSON.stringify(o) %>'>
+<i class="bi bi-printer"></i> FR
+</button>
+
+<!-- 🖨️ زر الطباعة -->
+<button 
+class="btn btn-success btn-sm printBtn"
+data-order='<%- JSON.stringify(o) %>'>
+<i class="bi bi-printer"></i>
+</button>
+
+<!-- 🗑️ حذف -->
+<button 
+class="btn btn-danger btn-sm deleteBtn"
+data-id="<%= o._id %>">
+<i class="bi bi-trash"></i>
+</button>
+
+</td>
+
+</tr>
+<% }) %>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+// 🔍 البحث
+document.getElementById("search").addEventListener("keyup", function(){
+let value = this.value.toLowerCase();
+document.querySelectorAll("#table tr").forEach(row => {
+row.style.display = row.innerText.toLowerCase().includes(value) ? "" : "none";
+});
+});
+
+// 🗑️ حذف
+document.querySelectorAll(".deleteBtn").forEach(btn => {
+btn.addEventListener("click", async () => {
+
+if (!confirm("هل أنت متأكد؟")) return;
+
+const id = btn.dataset.id;
+
+const res = await fetch("/order/delete/" + id, { method:"DELETE" });
+const data = await res.json();
+
+if(data.success){
+document.getElementById("row-"+id).remove();
+}
+
+});
+});
+
+// 🖨️ الطباعة
+document.querySelectorAll(".printBtn").forEach(btn => {
+
+btn.addEventListener("click", () => {
+
+  const order = JSON.parse(btn.dataset.order);
+  let productsHTML = "";
+
+order.products.forEach(p => {
+
+const priceWithTax = p.priceWithTax || 0; // ✅ من قاعدة البيانات
+const subtotal = priceWithTax * p.quantity;
+
+productsHTML += `
+<tr>
+  <td>${p.product?.code || ''}</td>
+  <td>${p.product?.name || ''}</td>
+  <td>${p.quantity}</td>
+  <td>${subtotal.toFixed(2)}</td>
+</tr>`;
+});
+
+  const w = window.open('', '', 'width=900,height=700');
+
+  w.document.write(`
+<html dir="rtl">
+<head>
+<meta charset="UTF-8">
+
+<style>
+body{ font-family:'Cairo', sans-serif; }
+.page{ width:800px; margin:auto; border:3px solid black; padding:15px; }
+.header{text-align:center; font-size:14px; line-height:1.8;}
+.title{border:2px solid black; display:inline-block; padding:5px 20px; margin:10px 0; font-weight:bold;}
+.form{margin-top:10px;}
+.row{display:flex; justify-content:space-between; margin:8px 0;}
+.field{width:48%; font-size:14px;}
+.line{display:inline-block; border-bottom:1px dotted black; width:200px; height:18px;}
+.table{width:100%; border-collapse:collapse; margin-top:20px;}
+.table td, .table th{border:1px solid black; padding:6px; text-align:center;}
+.note{margin-top:15px; font-size:13px;}
+@media print{ body{margin:0;} }
+</style>
+
+</head>
+<body>
+
+<div class="page">
+
+<div class="header">
+<div>الجمهورية الجزائرية الديمقراطية الشعبية</div>
+<div>وزارة التربية الوطنية</div>
+<div>اللجنة الولائية للخدمات الاجتماعية</div>
+<div class="title">استمارة طلب منتوج</div>
+</div>
+
+<!-- المعلومات الشخصية -->
+<div class="form">
+
+<div class="row">
+<div class="field">اللقب: <span class="line">${order.lastName}</span></div>
+<div class="field">الاسم: <span class="line">${order.firstName}</span></div>
+</div>
+
+<div class="row">
+<div class="field">تاريخ الميلاد: <span class="line">${order.birthDate ? new Date(order.birthDate).toLocaleDateString() : ''}</span></div>
+<div class="field">الوظيفة: <span class="line">${order.job || ''}</span></div>
+</div>
+
+<div class="row">
+<div class="field">مكان العمل: <span class="line">${order.workPlace || ''}</span></div>
+<div class="field">رقم بطاقة التعريف: <span class="line">${order.membershipCard || ''}</span></div>
+</div>
+
+<div class="row">
+<div class="field">رقم الحساب البريدي: <span class="line">${order.postalAccount || ''}</span></div>
+<div class="field">رقم الهاتف: <span class="line">${order.phone || ''}</span></div>
+</div>
+
+</div>
+
+<!-- جدول المنتجات -->
+<table class="table">
+<thead>
+<tr>
+<th>الكود</th>
+<th>اسم المنتوج</th>
+<th>العدد</th>
+<th>المبلغ</th>
+</tr>
+</thead>
+<tbody>
+${productsHTML}
+</tbody>
+</table>
+
+<!-- المجموع -->
+<div class="row" style="margin-top:10px;">
+<div class="field">المجموع: <span class="line">${order.total} دج</span></div>
+</div>
+
+<div class="note">
+• مرفق: نسخة من بطاقة التعريف + كشف الراتب
+</div>
+
+</div>
+
+<script>
+window.onload = function(){ window.print(); }
+<\/script>
+
+</body>
+</html>
+`);
+
+  w.document.close();
+
+});
+
+});
+
+document.querySelectorAll(".printFrBtn").forEach(btn => {
+
+btn.addEventListener("click", () => {
+
+  const order = JSON.parse(btn.dataset.order);
+
+  const w = window.open('', '', 'width=1100,height=700');
+
+  w.document.write(`
+<html>
+<head>
+<meta charset="UTF-8">
+
+<style>
+body{
+  margin:0;
+}
+
+/* الصفحة */
+.page{
+  position:relative;
+  width:1100px;
+  height:700px;
+  margin:auto;
+}
+
+/* الخلفية */
+.bg{
+  width:100%;
+  height:100%;
+}
+
+/* النص */
+.text{
+  position:absolute;
+  font-family: Arial;
+  font-size:14px;
+  font-weight:bold;
+}
+
+/* 📍 الإحداثيات (مضبوطة حسب صورتك) */
+
+/* الجزء الأيسر */
+.nom1{
+  top:165px;
+  left:140px;
+}
+
+.prenom1{
+  top:165px;
+  left:360px;
+}
+
+.ccp1{
+  top:230px;
+  left:220px;
+  letter-spacing:10px;
+  font-size:16px;
+}
+
+/* الجزء الأيمن */
+.nom2{
+  top:165px;
+  left:640px;
+}
+
+.prenom2{
+  top:165px;
+  left:860px;
+}
+
+.ccp2{
+  top:230px;
+  left:720px;
+  letter-spacing:10px;
+  font-size:16px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="page">
+
+<img src="http://localhost:3000/images/628393948_122102040423246359_758838442359403644_n.jpg" class="bg">
+
+<!-- نسخة 1 -->
+<div class="text nom1">${order.lastName}</div>
+<div class="text prenom1">${order.firstName}</div>
+<div class="text ccp1">${order.postalAccount || ''}</div>
+
+<!-- نسخة 2 -->
+<div class="text nom2">${order.lastName}</div>
+<div class="text prenom2">${order.firstName}</div>
+<div class="text ccp2">${order.postalAccount || ''}</div>
+
+</div>
+
+<script>
+window.onload = function(){ window.print(); }
+<\/script>
+
+</body>
+</html>
+`);
+
+  w.document.close();
+
+});
+
+});
+</script>
+
+</body>
+</html>

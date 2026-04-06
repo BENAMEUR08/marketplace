@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سلع التاجر</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+body {
+    background:#f4f6f9;
+    font-family:'Cairo',sans-serif;
+}
+.navbar {
+    box-shadow:0 3px 10px rgba(0,0,0,0.1);
+}
+.card {
+    border:none;
+    border-radius:12px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.08);
+}
+.table {
+    border-radius:10px;
+    overflow:hidden;
+}
+.table thead {
+    background:#0d6efd;
+    color:white;
+}
+.btn {
+    border-radius:8px;
+}
+.search-box {
+    max-width:300px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<div class="container-fluid">
+<a class="navbar-brand fw-bold" href="/"><i class="bi bi-speedometer2"></i> لوحة التحكم</a>
+<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+<span class="navbar-toggler-icon"></span>
+</button>
+<div class="collapse navbar-collapse" id="navbarNav">
+<ul class="navbar-nav me-auto">
+<li class="nav-item">
+<a class="nav-link" href="/"><i class="bi bi-house"></i> الرئيسية</a>
+</li>
+<li class="nav-item">
+<a class="nav-link" href="/orders"><i class="bi bi-cart-check"></i> السلع المباعة</a>
+</li>
+</ul>
+</div>
+</div>
+</nav>
+
+<div class="container mt-4">
+
+<h3 class="text-center fw-bold mb-4">سلع التاجر : <span class="text-primary"><%= trader.name %></span></h3>
+
+<!-- أدوات -->
+<div class="d-flex justify-content-between mb-3">
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProduct">
+<i class="bi bi-plus-circle"></i> إضافة سلعة
+</button>
+<button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadExcel">
+    <i class="bi bi-file-earmark-excel"></i> استيراد Excel
+    </button>
+<input class="form-control search-box" id="search" placeholder="🔍 البحث عن سلعة أو كود">
+</div>
+
+<!-- جدول السلع -->
+<div class="card p-3">
+<table class="table table-hover text-center align-middle">
+<thead>
+<tr>
+<th>الكود</th>
+<th>اسم السلعة</th>
+<th>السعر</th>
+<th>الإجراءات</th>
+</tr>
+</thead>
+<tbody id="table">
+<% products.forEach(p => { %>
+<tr>
+<td class="fw-bold text-primary"><%= p.code %></td>
+<td class="fw-bold"><%= p.name %></td>
+<td class="text-success"><%= p.price %> دج</td>
+<td>
+<!-- زر تعديل السلعة -->
+<button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#edit<%=p._id%>">
+<i class="bi bi-pencil-square"></i> تعديل
+</button>
+
+<a href="/product/delete/<%=p._id%>/<%=trader._id%>" class="btn btn-danger btn-sm"
+onclick="return confirm('هل أنت متأكد من حذف هذه السلعة؟')">
+<i class="bi bi-trash"></i> حذف
+</a>
+</td>
+</tr>
+
+<!-- Modal تعديل السلعة -->
+<div class="modal fade" id="edit<%=p._id%>">
+<div class="modal-dialog">
+<div class="modal-content">
+<form action="/product/update/<%=p._id%>/<%=trader._id%>" method="POST">
+<div class="modal-header">
+<h5 class="modal-title">تعديل السلعة</h5>
+<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+<input name="name" class="form-control mb-2" value="<%=p.name%>" placeholder="اسم السلعة" required>
+<input type="number" name="price" class="form-control mb-2" value="<%=p.price%>" placeholder="السعر" required>
+</div>
+<div class="modal-footer">
+<button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> حفظ التعديلات</button>
+<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+
+<% }) %>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Toast -->
+<div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 9999">
+    <div id="traderToast" class="toast align-items-center text-white border-0">
+      <div class="d-flex">
+        <div class="toast-body"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+<!-- Modal إضافة سلعة -->
+<div class="modal fade" id="addProduct">
+<div class="modal-dialog">
+<div class="modal-content">
+<form action="/product/add/<%=trader._id%>" method="POST">
+<div class="modal-header">
+<h5 class="modal-title">إضافة سلعة جديدة</h5>
+<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+<input name="name" class="form-control mb-2" placeholder="اسم السلعة" required>
+<input type="number" name="price" class="form-control mb-2" placeholder="السعر" required>
+</div>
+<div class="modal-footer">
+<button type="submit" class="btn btn-primary">
+<i class="bi bi-save"></i> حفظ
+</button>
+<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+
+<div class="modal fade" id="uploadExcel">
+    <div class="modal-dialog">
+    <div class="modal-content">
+    
+    <form action="/product/upload/<%= trader._id %>" method="POST" enctype="multipart/form-data">
+    
+    <div class="modal-header">
+    <h5 class="modal-title">رفع ملف Excel</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    
+    <div class="modal-body">
+    <input type="file" name="excelFile" class="form-control" accept=".xlsx,.xls" required>
+    <small class="text-muted">يجب أن يحتوي الملف على الأعمدة: name و price</small>
+    </div>
+    
+    <div class="modal-footer">
+    <button type="submit" class="btn btn-success">
+    <i class="bi bi-upload"></i> رفع
+    </button>
+    </div>
+    
+    </form>
+    
+    </div>
+    </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// البحث في الجدول (يدعم الاسم أو الكود)
+document.getElementById("search").addEventListener("keyup", function(){
+let value = this.value.toLowerCase();
+document.querySelectorAll("#table tr").forEach(row => {
+row.style.display = row.innerText.toLowerCase().includes(value) ? "" : "none";
+});
+});
+
+function getQueryParam(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const toastType = getQueryParam("toast");
+    if (!toastType) return;
+
+    const toastEl = document.getElementById("traderToast");
+    const toastBody = toastEl.querySelector(".toast-body");
+
+    // إعادة تعيين الكلاسات
+    toastEl.className = "toast align-items-center text-white border-0";
+
+    switch(toastType) {
+
+        case "product_has_orders":
+            toastEl.classList.add("bg-warning");
+            toastBody.innerText = "⚠️ لا يمكن حذف السلعة لأنها موجودة في سلع مباعة";
+            break;
+
+        case "product_deleted":
+            toastEl.classList.add("bg-success");
+            toastBody.innerText = "🗑️ تم حذف السلعة بنجاح";
+            break;
+
+        case "excel_success":
+            toastEl.classList.add("bg-success");
+            toastBody.innerText = "📊 تم استيراد السلع من Excel بنجاح";
+            break;
+
+        case "error":
+            toastEl.classList.add("bg-dark");
+            toastBody.innerText = "❌ حدث خطأ";
+            break;
+        case "operation_active":
+            toastEl.classList.add("bg-warning");
+            toastBody.innerText = "⚠️ لا يمكن تعديل السلعة أثناء وجود عملية نشطة";
+            break;
+        case "product_updated":
+            toastEl.classList.add("bg-success");
+            toastBody.innerText = "✅ تم تعديل السلعة بنجاح";
+            break;
+    }
+
+    // تشغيل الـ Toast
+    new bootstrap.Toast(toastEl).show();
+
+    // تنظيف الرابط بعد العرض
+    if (window.history.replaceState) {
+        const url = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, url);
+    }
+
+});
+</script>
+
+</body>
+</html>

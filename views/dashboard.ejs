@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<title>لوحة التحكم</title>
+
+<style>
+body{
+    background:#f4f6f9;
+    font-family:'Cairo',sans-serif;
+}
+.card{
+    border:none;
+    border-radius:12px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.08);
+}
+.table thead{
+    background:#0d6efd;
+    color:white;
+}
+.btn{
+    border-radius:8px;
+}
+.search-box{
+    max-width:350px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<div class="container-fluid">
+<a class="navbar-brand fw-bold" href="/"><i class="bi bi-speedometer2"></i> لوحة التحكم</a>
+<ul class="navbar-nav me-auto">
+<li class="nav-item">
+<a class="nav-link" href="/orders"><i class="bi bi-cart-check"></i> السلع المباعة</a>
+</li>
+</ul>
+</div>
+</nav>
+
+<div class="container mt-4">
+
+<h3 class="text-center mb-4">لوحة تحكم التجار</h3>
+
+<% if (activeOperation) { %>
+    <div class="mb-3 text-end">
+      <a href="/operation/download/<%= activeOperation._id %>" class="btn btn-primary">
+        📥 تحميل جميع الطلبات للعملية النشطة
+      </a>
+    </div>
+<% } %>
+
+<!-- عملية نشطة / فتح عملية جديدة -->
+<div class="mb-3">
+  <% if (!activeOperation) { %>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#startOperationModal">
+      فتح عملية جديدة
+    </button>
+  <% } else { %>
+    <div class="alert alert-info p-2">
+      العملية النشطة: <strong><%= activeOperation.name %></strong> | 
+      من <%= new Date(activeOperation.startDate).toLocaleDateString() %> 
+      إلى <%= new Date(activeOperation.endDate).toLocaleDateString() %> |
+      عدد الأشهر: <%= activeOperation.monthsCount %>
+      <form action="/operation/end/<%= activeOperation._id %>" method="POST" class="d-inline" 
+        onsubmit="return confirm('⚠️ هل أنت متأكد من إنهاء العملية الحالية؟');">
+      <button type="submit" class="btn btn-warning btn-sm ms-2">
+          إنهاء العملية الحالية
+      </button>
+      </form>
+    </div>
+  <% } %>
+</div>
+
+<!-- أدوات -->
+<div class="d-flex justify-content-between mb-3">
+<div>
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTrader">
+<i class="bi bi-person-plus"></i> إضافة تاجر
+</button>
+
+<button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#buyModal"
+<% if (!activeOperation) { %> disabled <% } %>>
+<i class="bi bi-cart-plus"></i> شراء عتاد
+</button>
+</div>
+
+<input class="form-control search-box" id="search" placeholder="🔍 البحث (اسم / هاتف / كود)">
+</div>
+
+<!-- جدول التجار -->
+<div class="card p-3">
+<table class="table text-center align-middle">
+<thead>
+<tr>
+<th>الكود</th>
+<th>الاسم</th>
+<th>الهاتف</th>
+<th>البريد</th>
+<th>التخصص</th>
+<th>إجراءات</th>
+</tr>
+</thead>
+<tbody id="table">
+<% traders.forEach(t => { %>
+<tr>
+<td class="fw-bold text-primary"><%= t.prefix %></td>
+<td><%= t.name %></td>
+<td><%= t.phone %></td>
+<td><%= t.email %></td>
+<td><%= t.field %></td>
+<td>
+<a href="/trader/<%=t._id%>/products" class="btn btn-success btn-sm">السلع</a>
+<form action="/trader/delete/<%= t._id %>" method="POST" class="d-inline"
+    onsubmit="return confirm('⚠️ هل أنت متأكد من حذف هذا التاجر؟');">
+  <button type="submit" class="btn btn-danger btn-sm">
+      حذف
+  </button>
+</form>
+</td>
+</tr>
+<% }) %>
+</tbody>
+</table>
+</div>
+
+</div>
+
+<!-- Modal فتح عملية جديدة -->
+<div class="modal fade" id="startOperationModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/operation/add" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">فتح عملية جديدة</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="text" name="name" class="form-control mb-2" placeholder="اسم العملية" required>
+          <label>النسبة المضافة (%):</label>
+          <input type="number" name="taxPercent" class="form-control mb-2" value="0.7" step="0.01" min="0" required>
+          <label>تاريخ بداية الاقتطاع:</label>
+          <input type="date" name="startDate" class="form-control mb-2" required>
+          <label>تاريخ نهاية الاقتطاع:</label>
+          <input type="date" name="endDate" class="form-control mb-2" required>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">إنشاء العملية</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal إضافة تاجر -->
+<div class="modal fade" id="addTrader">
+<div class="modal-dialog">
+<div class="modal-content">
+<form action="/trader/add" method="POST">
+<div class="modal-header">
+<h5 class="modal-title">إضافة تاجر</h5>
+<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+<input name="name" class="form-control mb-2" placeholder="الاسم" required>
+<input name="phone" class="form-control mb-2" placeholder="الهاتف" required>
+<input name="email" class="form-control mb-2" placeholder="البريد" required>
+<input name="field" class="form-control mb-2" placeholder="التخصص" required>
+</div>
+<div class="modal-footer">
+<button type="submit" class="btn btn-primary">حفظ</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+
+<!-- Modal شراء عتاد -->
+<div class="modal fade" id="buyModal">
+<div class="modal-dialog modal-lg">
+<div class="modal-content">
+
+<form action="/order/add" method="POST">
+
+<div class="modal-header">
+<h5>طلب شراء</h5>
+<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body">
+
+<h6 class="text-primary">معلومات الزبون</h6>
+<div class="row">
+<div class="col-md-6"><input name="firstName" class="form-control mb-2" placeholder="الاسم" required></div>
+<div class="col-md-6"><input name="lastName" class="form-control mb-2" placeholder="اللقب" required></div>
+<div class="col-md-6"><input name="firstNameFr" class="form-control mb-2" placeholder="Prénom (FR)" required></div>
+<div class="col-md-6"><input name="lastNameFr" class="form-control mb-2" placeholder="Nom (FR)" required></div>
+<div class="col-md-6"><input name="job" class="form-control mb-2" placeholder="الوظيفة" required></div>
+<div class="col-md-6"><input type="date" name="birthDate" class="form-control mb-2" required></div>
+<div class="col-md-6"><input name="workPlace" class="form-control mb-2" placeholder="مكان العمل" required></div>
+<div class="col-md-6"><input name="postalAccount" class="form-control mb-2" placeholder="الحساب البريدي" required></div>
+<div class="col-md-6"><input name="cleCcp" class="form-control mb-2" placeholder="مفتاح CCP (clé)" required></div>
+<div class="col-md-6"><input name="phone" class="form-control mb-2" placeholder="الهاتف" required></div>
+<div class="col-md-6"><input name="membershipCard" class="form-control mb-2" placeholder="بطاقة الانخراط" required></div>
+</div>
+
+<hr>
+
+<!-- حقل النسبة المضافة -->
+<div class="mb-3">
+<label class="form-label fw-bold">النسبة المضافة (%)</label>
+<input type="number" id="taxPercentInput" class="form-control" readonly>
+</div>
+
+<h6 class="text-success">اختيار السلع</h6>
+<input type="text" id="productSearch" class="form-control mb-2" placeholder="🔍 البحث (كود / اسم)">
+
+<div id="productsBox" style="max-height:250px;overflow:auto;">
+<% products.forEach(p => { %>
+<div class="border p-2 mb-2 rounded product-item" data-price="<%= p.price %>">
+
+<div class="form-check">
+<input class="form-check-input product-check" type="checkbox" name="products[]" value="<%= p._id %>">
+
+<label class="form-check-label fw-bold">
+<%= p.code %> - <%= p.name %> - <%= p.price %> دج ( <%= p.trader.name %> )
+</label>
+</div>
+
+<input type="number" name="qty_<%= p._id %>" value="1" min="1" class="form-control mt-2 qty-input" disabled>
+
+</div>
+<% }) %>
+</div>
+
+<hr>
+<input type="hidden" name="totalWithTax" id="totalWithTax" value="0">
+<h5 class="text-danger text-center">الإجمالي: <span id="totalPrice">0</span> دج</h5>
+
+</div>
+
+<div class="modal-footer">
+<button class="btn btn-success">تأكيد الطلب</button>
+</div>
+
+</form>
+
+</div>
+</div>
+</div>
+
+<!-- Toast -->
+<div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 9999">
+  <div id="traderToast" class="toast align-items-center text-white border-0">
+    <div class="d-flex">
+      <div class="toast-body"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// البحث في التجار
+document.getElementById("search").addEventListener("keyup", function(){
+let value = this.value.toLowerCase().trim();
+document.querySelectorAll("#table tr").forEach(row => {
+row.style.display = row.innerText.toLowerCase().includes(value) ? "" : "none";
+});
+});
+
+// البحث في المنتجات
+document.getElementById("productSearch").addEventListener("keyup", function(){
+let value = this.value.toLowerCase().trim();
+document.querySelectorAll("#productsBox .product-item").forEach(item => {
+item.style.display = item.innerText.toLowerCase().includes(value) ? "" : "none";
+});
+});
+
+// جلب النسبة من العملية
+const operationTax = <%= typeof taxPercent !== 'undefined' ? taxPercent : 0 %>;
+
+// وضع النسبة في الحقل عند تحميل الصفحة
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("taxPercentInput").value = operationTax.toFixed(2);
+});
+
+// عند فتح المودال → حساب تلقائي
+const buyModal = document.getElementById("buyModal");
+buyModal.addEventListener("shown.bs.modal", () => {
+    calculateTotal();
+});
+
+// تفعيل checkbox
+document.querySelectorAll(".product-check").forEach(check => {
+    check.addEventListener("change", function () {
+        const item = this.closest(".product-item");
+        const qtyInput = item.querySelector(".qty-input");
+
+        qtyInput.disabled = !this.checked;
+
+        if (!this.checked) {
+            const label = item.querySelector(".tax-label");
+            if (label) label.remove();
+        }
+
+        calculateTotal();
+    });
+});
+
+// تغيير الكمية
+document.querySelectorAll(".qty-input").forEach(input => {
+    input.addEventListener("input", calculateTotal);
+});
+
+function calculateTotal() {
+    let total = 0;
+    const taxPercent = operationTax;
+
+    document.querySelectorAll(".product-item").forEach(item => {
+        const checkbox = item.querySelector(".product-check");
+        const qtyInput = item.querySelector(".qty-input");
+
+        const qty = parseInt(qtyInput.value) || 0;
+        const price = parseFloat(item.getAttribute("data-price")) || 0;
+
+        // حذف label القديم
+        const oldLabel = item.querySelector(".tax-label");
+        if (oldLabel) oldLabel.remove();
+
+        if (checkbox.checked && qty > 0) {
+            const newPrice = price * (1 + taxPercent / 100);
+            const subtotal = newPrice * qty;
+
+            total += subtotal;
+
+            // عرض السعر بعد النسبة
+            const label = document.createElement("small");
+            label.classList.add("d-block", "text-success", "tax-label");
+
+            label.innerText =
+                `السعر بعد ${taxPercent}%: ${newPrice.toFixed(2)} دج | المجموع: ${subtotal.toFixed(2)} دج`;
+
+            item.appendChild(label);
+        }
+    });
+
+    document.getElementById("totalPrice").innerText = total.toFixed(2);
+    document.getElementById("totalWithTax").value = total.toFixed(2);
+}
+
+// تحديث الإجمالي عند تغيير الكمية أو النسبة
+document.querySelectorAll(".qty-input").forEach(input => {
+input.addEventListener("input", calculateTotal);
+});
+document.getElementById("taxPercentInput").addEventListener("input", calculateTotal);
+
+// منع إرسال الفورم بدون اختيار سلعة
+document.querySelector("#buyModal form").addEventListener("submit", function(e){
+const anyChecked = Array.from(document.querySelectorAll(".product-check")).some(chk => chk.checked);
+if(!anyChecked){
+    e.preventDefault();
+    alert("⚠️ يجب اختيار سلعة واحدة على الأقل لإتمام الشراء!");
+}
+});
+
+// قراءة Toast من URL
+function getQueryParam(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+const toastType = getQueryParam("toast");
+if (!toastType) return;
+
+const toastEl = document.getElementById("traderToast");
+const toastBody = toastEl.querySelector(".toast-body");
+
+toastEl.className = "toast align-items-center text-white border-0";
+
+switch(toastType) {
+    case "exists":
+        toastEl.classList.add("bg-danger");
+        toastBody.innerText = "⚠️ التاجر موجود مسبقًا";
+        break;
+    case "deleted":
+        toastEl.classList.add("bg-success");
+        toastBody.innerText = "🗑️ تم حذف التاجر بنجاح";
+        break;
+    case "has_sales":
+        toastEl.classList.add("bg-warning");
+        toastBody.innerText = "⚠️ لا يمكن حذف التاجر لأنه لديه سلع مباعة";
+        break;
+    case "error":
+        toastEl.classList.add("bg-dark");
+        toastBody.innerText = "❌ حدث خطأ";
+        break;
+    case "excel_success":
+        toastEl.classList.add("bg-success");
+        toastBody.innerText = "📊 تم استيراد السلع من Excel بنجاح";
+        break;
+    case "no_operation":
+        toastEl.classList.add("bg-warning");
+        toastBody.innerText = "⚠️ لا توجد عملية نشطة، يرجى فتح عملية جديدة أولًا";
+        break;
+    case "operation_ended":
+        toastEl.classList.add("bg-success");
+        toastBody.innerText = "✅ تم إنهاء العملية الحالية بنجاح";
+        break;
+    case "operation_created":
+        toastEl.classList.add("bg-success");
+        toastBody.innerText = "✅ تم إنشاء العملية بنجاح";
+        break;
+    case "already_ordered":
+        toastEl.classList.add("bg-warning");
+        toastBody.innerText = "⚠️ هذا الشخص قام بطلب مسبقًا في هذه العملية";
+        break;
+    case "invalid_date":
+        toastEl.classList.add("bg-warning");
+        toastBody.innerText = "⚠️ يرجى إدخال تواريخ صحيحة";
+        break;
+
+case "date_error":
+    toastEl.classList.add("bg-danger");
+    toastBody.innerText = "❌ تاريخ البداية يجب أن يكون قبل تاريخ النهاية";
+    break;
+
+case "negative_tax":
+    toastEl.classList.add("bg-danger");
+    toastBody.innerText = "❌ لا يمكن إدخال نسبة سالبة";
+    break;
+
+case "high_tax":
+    toastEl.classList.add("bg-danger");
+    toastBody.innerText = "❌ النسبة كبيرة جدًا (أقصى حد 100%)";
+    break;
+
+case "invalid_months":
+    toastEl.classList.add("bg-warning");
+    toastBody.innerText = "⚠️ عدد الأشهر غير صالح";
+    break;
+case "missing_fields":
+    toastEl.classList.add("bg-warning");
+    toastBody.innerText = "⚠️ يرجى ملء جميع الحقول";
+    break;
+
+case "invalid_phone":
+    toastEl.classList.add("bg-danger");
+    toastBody.innerText = "📞 رقم الهاتف غير صالح";
+    break;
+
+case "already_ordered":
+    toastEl.classList.add("bg-danger");
+    toastBody.innerText = "❌ تم تقديم طلب مسبق";
+    break;
+
+case "no_products":
+    toastEl.classList.add("bg-warning");
+    toastBody.innerText = "🛒 يرجى اختيار منتج واحد على الأقل";
+    break;
+
+case "invalid_qty":
+    toastEl.classList.add("bg-danger");
+    toastBody.innerText = "🔢 كمية غير صالحة";
+    break;
+
+case "total_mismatch":
+    toastEl.classList.add("bg-danger");
+    toastBody.innerText = "⚠️ خطأ في الحساب";
+     break;
+
+case "no_operation":
+    toastEl.classList.add("bg-secondary");
+    toastBody.innerText = "🚫 لا توجد عملية مفعلة";
+    break;
+
+case "order_created":
+    toastEl.classList.add("bg-success");
+    toastBody.innerText = "✅ تم تسجيل الطلب بنجاح";
+    break;
+}
+
+new bootstrap.Toast(toastEl).show();
+
+if(window.history.replaceState) {
+    const url = window.location.origin + window.location.pathname;
+    window.history.replaceState({}, document.title, url);
+}
+});
+
+// حساب المجموع عند فتح المودال للمرة الأولى
+calculateTotal();
+</script>
+
+</body>
+</html>
