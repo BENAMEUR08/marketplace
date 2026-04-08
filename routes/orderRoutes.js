@@ -27,6 +27,7 @@ router.post("/order/add", async (req, res) => {
             phone,
             membershipCard,
             products,
+            salary,
             totalWithTax
         } = req.body;
 
@@ -34,7 +35,11 @@ router.post("/order/add", async (req, res) => {
         if (!firstName || !lastName || !job || !birthDate || !workPlace || !postalAccount || !phone || !membershipCard) {
             return res.redirect("/?toast=missing_fields");
         }
+        const salaryValue = parseFloat(salary);
 
+        if (isNaN(salaryValue) || salaryValue <= 0) {
+             return res.redirect("/?toast=invalid_salary");
+        }
         // ✅ تحقق من الهاتف
         if (!/^[0-9]{8,15}$/.test(phone)) {
             return res.redirect("/?toast=invalid_phone");
@@ -89,7 +94,12 @@ router.post("/order/add", async (req, res) => {
                 priceWithTax: priceWithTax  // ✅ تخزين السعر بعد الضريبة
             });
         }
+        // ✅ حساب الحد الأقصى (30% من الراتب)
+        const maxAllowed = salaryValue * 0.3;
 
+        if (totalCalculated > maxAllowed) {
+            return res.redirect(`/?toast=salary_limit&max=${maxAllowed.toFixed(2)}`);
+        }
         // ✅ حماية من التلاعب (front-end)
         const totalFromClient = parseFloat(totalWithTax) || 0;
 

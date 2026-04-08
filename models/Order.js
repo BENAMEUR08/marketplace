@@ -75,5 +75,6 @@ const orderSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 
 });
-
+orderSchema.index({ operation: 1 });
+orderSchema.index({ "products.product": 1 });
 module.exports = mongoose.model("Order", orderSchema);

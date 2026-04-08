@@ -213,6 +213,17 @@ body{
 <div class="col-md-6"><input name="cleCcp" class="form-control mb-2" placeholder="مفتاح CCP (clé)" required></div>
 <div class="col-md-6"><input name="phone" class="form-control mb-2" placeholder="الهاتف" required></div>
 <div class="col-md-6"><input name="membershipCard" class="form-control mb-2" placeholder="بطاقة الانخراط" required></div>
+<div class="col-md-6">
+<input 
+      type="number" 
+      name="salary" 
+      class="form-control mb-2" 
+      placeholder="قيمة الراتب "
+      min="0"
+      step="0.01"
+      required
+    >
+</div>
 </div>
 
 <hr>
@@ -490,6 +501,16 @@ case "no_operation":
 case "order_created":
     toastEl.classList.add("bg-success");
     toastBody.innerText = "✅ تم تسجيل الطلب بنجاح";
+    break;
+case "salary_limit":
+    const max = getQueryParam("max");
+    toastEl.classList.add("bg-danger");
+    toastBody.innerText = `❌ المبلغ يتجاوز 30% من الراتب (الحد الأقصى: ${max} دج)`;
+    break;
+
+case "invalid_salary":
+    toastEl.classList.add("bg-warning");
+    toastBody.innerText = "⚠️ قيمة الراتب غير صالحة";
     break;
 }
 

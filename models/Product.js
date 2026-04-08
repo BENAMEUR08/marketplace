@@ -12,5 +12,5 @@ const ProductSchema = new mongoose.Schema({
     ref: "Trader"
   }
 },{ timestamps: true });
-
+ProductSchema.index({ trader: 1 });
 module.exports = mongoose.model("Product", ProductSchema);
