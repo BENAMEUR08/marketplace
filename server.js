@@ -10,7 +10,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // EJS
 app.set("view engine", "ejs");
-
+app.set('views', __dirname + '/views');
 // اتصال بقاعدة البيانات
 mongoose.connect(process.env.MONGO_URI).then(() => console.log("mongodb"))
   .catch(err => console.error("خطأ:", err));
