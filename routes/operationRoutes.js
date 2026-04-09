@@ -4,6 +4,7 @@ const router = express.Router();
 const Operation = require("../models/Operation");
 const ExcelJS = require("exceljs");
 const Order = require("../models/Order");
+const { isAuth } = require("../middlewares/auth");
 
 // إنشاء عملية جديدة
 router.post("/operation/add", async (req, res) => {

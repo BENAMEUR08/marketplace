@@ -36,29 +36,58 @@ body{
 
 <body>
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-<div class="container-fluid">
-<a class="navbar-brand fw-bold" href="/"><i class="bi bi-speedometer2"></i> لوحة التحكم</a>
-<ul class="navbar-nav me-auto">
-<li class="nav-item">
-<a class="nav-link" href="/orders"><i class="bi bi-cart-check"></i> السلع المباعة</a>
-</li>
-</ul>
-</div>
-</nav>
+<!-- Navbar احترافي -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container-fluid">
+  
+      <!-- Logo / Title -->
+      <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+        <i class="bi bi-building"></i>
+        <span>لجنة الخدمات الاجتماعية - بشار</span>
+      </a>
+  
+      <!-- زر الموبايل -->
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+  
+      <!-- Links -->
+      <div class="collapse navbar-collapse" id="navbarNav">
+  
+        <!-- الروابط -->
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+  
+          <li class="nav-item">
+            <a class="nav-link" href="/">
+              <i class="bi bi-speedometer2"></i> الرئيسية
+            </a>
+          </li>
+  
+          <li class="nav-item">
+            <a class="nav-link" href="/orders">
+              <i class="bi bi-cart-check"></i> السلع المباعة
+            </a>
+          </li>
+  
+        </ul>
+  
+        <!-- يمين (معلومات + خروج) -->
+        <div class="d-flex align-items-center gap-3">
+  
+          <!-- زر خروج -->
+          <a href="/logout" class="btn btn-danger btn-sm">
+            <i class="bi bi-box-arrow-right"></i> خروج
+          </a>
+  
+        </div>
+  
+      </div>
+    </div>
+  </nav>
 
 <div class="container mt-4">
 
-<h3 class="text-center mb-4">لوحة تحكم التجار</h3>
-
-<% if (activeOperation) { %>
-    <div class="mb-3 text-end">
-      <a href="/operation/download/<%= activeOperation._id %>" class="btn btn-primary">
-        📥 تحميل جميع الطلبات للعملية النشطة
-      </a>
-    </div>
-<% } %>
+<h3 class="text-center mb-4">لوحة التحكم الرئيسية</h3>
 
 <!-- عملية نشطة / فتح عملية جديدة -->
 <div class="mb-3">
@@ -511,6 +540,24 @@ case "salary_limit":
 case "invalid_salary":
     toastEl.classList.add("bg-warning");
     toastBody.innerText = "⚠️ قيمة الراتب غير صالحة";
+    break;
+case "invalid_name":
+    toastEl.classList.add("bg-warning");
+    toastBody.innerText = "⚠️ الاسم يجب أن يكون 3 أحرف على الأقل";
+    break;
+
+case "invalid_email":
+    toastEl.classList.add("bg-warning");
+    toastBody.innerText = "📧 البريد الإلكتروني غير صالح";
+    break;
+
+case "created":
+    toastEl.classList.add("bg-success");
+    toastBody.innerText = "✅ تم إضافة التاجر بنجاح";
+    break;
+case "invalid_ccp":
+    toastEl.classList.add("bg-danger");
+    toastBody.innerText = "💳 رقم الحساب البريدي (CCP) غير صالح";
     break;
 }
 

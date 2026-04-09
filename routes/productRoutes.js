@@ -6,10 +6,11 @@ const Operation = require("../models/Operation");
 const multer = require("multer");
 const XLSX = require("xlsx");
 const fs = require("fs");
+const { isAuth } = require("../middlewares/auth");
 const upload = multer({ dest: "uploads/" });
 
 /* إضافة سلعة */
-router.post("/product/add/:traderId", async (req, res) => {
+router.post("/product/add/:traderId",isAuth, async (req, res) => {
     const { name, price } = req.body;
     const traderId = req.params.traderId;
     const trader = await require("../models/Trader").findById(traderId);
@@ -30,7 +31,7 @@ router.post("/product/add/:traderId", async (req, res) => {
 });
 
 /* رفع ملف Excel */
-router.post("/product/upload/:traderId", upload.single("excelFile"), async (req, res) => {
+router.post("/product/upload/:traderId",isAuth, upload.single("excelFile"), async (req, res) => {
     try {
         const traderId = req.params.traderId;
         const trader = await require("../models/Trader").findById(traderId);
@@ -63,7 +64,7 @@ router.post("/product/upload/:traderId", upload.single("excelFile"), async (req,
 });
 
 /* حذف سلعة */
-router.get("/product/delete/:id/:traderId", async (req, res) => {
+router.get("/product/delete/:id/:traderId",isAuth, async (req, res) => {
     const productId = req.params.id;
     const traderId = req.params.traderId;
 
@@ -75,7 +76,7 @@ router.get("/product/delete/:id/:traderId", async (req, res) => {
 });
 
 /* تعديل سلعة */
-router.post("/product/update/:id/:traderId", async (req, res) => {
+router.post("/product/update/:id/:traderId",isAuth, async (req, res) => {
     try {
         // 🔍 تحقق من وجود عملية نشطة
         const activeOperation = await Operation.findOne({ isActive: true });
